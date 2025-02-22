@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import NavigationBar from "@/components/NavigationBar";
 import MarketCard from "@/components/MarketCard";
 import { useToast } from "@/hooks/use-toast";
-import { ChartLineUp, Brain, TrendingUp } from "lucide-react";
+import { ChartLine, Brain, TrendingUp } from "lucide-react";
 
 // Temporary mock data
 const mockMarketData = [
@@ -66,7 +67,7 @@ const Index = () => {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <ChartLineUp className="w-6 h-6 text-primary" />
+              <ChartLine className="w-6 h-6 text-primary" />
               <h2 className="text-2xl font-bold text-gradient">Market Trends</h2>
             </div>
             <button
