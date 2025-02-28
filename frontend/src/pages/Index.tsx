@@ -1,45 +1,57 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import NavigationBar from "@/components/NavigationBar";
 import MarketCard from "@/components/MarketCard";
 import { useToast } from "@/hooks/use-toast";
 import { ChartLine, Brain, TrendingUp } from "lucide-react";
 
-// Temporary mock data
-const mockMarketData = [
-  {
-    name: "Bitcoin",
-    symbol: "BTC",
-    price: 43567.89,
-    change: 2.45,
-    marketCap: "$845.2B"
-  },
-  {
-    name: "Ethereum",
-    symbol: "ETH",
-    price: 2234.56,
-    change: -1.23,
-    marketCap: "$268.9B"
-  },
-  {
-    name: "Tesla",
-    symbol: "TSLA",
-    price: 248.50,
-    change: 3.78,
-    marketCap: "$788.4B"
-  },
-  {
-    name: "Apple",
-    symbol: "AAPL",
-    price: 175.34,
-    change: -0.45,
-    marketCap: "$2.74T"
+// Function to format market cap (e.g., $845.2B, $2.74T)
+const formatMarketCap = (cap: number): string => {
+  if (cap >= 1e12) {
+    return `$${(cap / 1e12).toFixed(2)}T`;
+  } else if (cap >= 1e9) {
+    return `$${(cap / 1e9).toFixed(1)}B`;
+  } else {
+    return `$${cap.toLocaleString()}`;
   }
-];
+};
 
 const Index = () => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [marketData, setMarketData] = useState<
+    { name: string; symbol: string; price: number; change: number; marketCap: string }[]
+  >([]);
+  const [loadingMarket, setLoadingMarket] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      try {
+        // Fetch crypto data from CoinGecko
+        const cryptoResponse = await axios.get(
+          "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,ripple"
+        );
+        if (!cryptoResponse.data.length) throw new Error("No crypto data from CoinGecko");
+        const cryptos = cryptoResponse.data.map((coin: any) => ({
+          name: coin.name,
+          symbol: coin.symbol.toUpperCase(),
+          price: coin.current_price,
+          change: coin.price_change_percentage_24h,
+          marketCap: formatMarketCap(coin.market_cap),
+        }));
+
+        setMarketData(cryptos);
+        setLoadingMarket(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch market data");
+        setLoadingMarket(false);
+        console.error(err);
+      }
+    };
+
+    fetchMarketData();
+  }, []);
 
   const handleGetInsights = () => {
     setLoading(true);
@@ -47,7 +59,7 @@ const Index = () => {
       setLoading(false);
       toast({
         title: "AI Insights Generated",
-        description: "Market analysis suggests a bullish trend in tech sector",
+        description: "Market analysis suggests a bullish trend in cryptocurrencies",
       });
     }, 1500);
   };
@@ -60,7 +72,7 @@ const Index = () => {
         <header className="text-center mb-12 md:mb-16 animate-fade-in">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gradient">AI Investment Advisor</h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
-            Get real-time market insights powered by advanced AI analysis
+            Get real-time cryptocurrency insights powered by advanced AI analysis
           </p>
         </header>
 
@@ -82,11 +94,17 @@ const Index = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-            {mockMarketData.map((asset) => (
-              <MarketCard key={asset.symbol} {...asset} />
-            ))}
-          </div>
+          {loadingMarket ? (
+            <div>Loading market data...</div>
+          ) : error ? (
+            <div className="text-red-500">{error}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+              {marketData.map((asset) => (
+                <MarketCard key={asset.symbol} {...asset} />
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="glass rounded-xl p-6 md:p-8 lg:p-10 animate-fade-in">
@@ -101,15 +119,15 @@ const Index = () => {
             <ul className="space-y-4">
               <li className="flex items-center gap-3 p-4 md:p-6 glass rounded-lg">
                 <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-green-400"></span>
-                <span className="font-medium md:text-lg">Tech sector shows strong growth potential</span>
+                <span className="font-medium md:text-lg">Bitcoin shows strong growth potential</span>
               </li>
               <li className="flex items-center gap-3 p-4 md:p-6 glass rounded-lg">
                 <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-yellow-400"></span>
-                <span className="font-medium md:text-lg">Cryptocurrency market indicates moderate volatility</span>
+                <span className="font-medium md:text-lg">Ethereum indicates moderate volatility</span>
               </li>
               <li className="flex items-center gap-3 p-4 md:p-6 glass rounded-lg">
                 <span className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-blue-400"></span>
-                <span className="font-medium md:text-lg">Global markets trending towards recovery</span>
+                <span className="font-medium md:text-lg">Crypto markets trending towards recovery</span>
               </li>
             </ul>
           </div>

@@ -1,19 +1,83 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import NavigationBar from "@/components/NavigationBar";
 import { Brain, DollarSign, ChartBar, ChartPie } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const mockAnalytics = [
-  { title: "Total Portfolio", value: "$125,430", change: "+5.2%", isPositive: true },
-  { title: "Monthly Savings", value: "$2,850", change: "+12.3%", isPositive: true },
-  { title: "Risk Level", value: "Moderate", change: "Balanced", isPositive: true },
-  { title: "AI Confidence", value: "92%", change: "+2.1%", isPositive: true }
-];
-
 const Dashboard = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [analytics, setAnalytics] = useState<
+    { title: string; value: string; change: string; isPositive: boolean }[]
+  >([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        // Only cryptocurrency holdings
+        const holdings = [
+          { id: "bitcoin", qty: 1, symbol: "BTC" },
+          { id: "ethereum", qty: 10, symbol: "ETH" },
+          { id: "ripple", qty: 4, symbol: "RPL" },
+        ];
+
+        // Fetch crypto prices from CoinGecko
+        const cryptoIds = holdings.map(h => h.id).join(",");
+        const cryptoResponse = await axios.get(
+          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${cryptoIds}`
+        );
+        if (!cryptoResponse.data.length) throw new Error("No crypto data from CoinGecko");
+        const cryptoData = cryptoResponse.data.reduce((acc: any, coin: any) => {
+          acc[coin.id] = coin.current_price;
+          return acc;
+        }, {});
+
+        // Calculate total portfolio value (only cryptos)
+        const totalValue = holdings.reduce((sum, holding) => {
+          const price = cryptoData[holding.id];
+          return sum + price * holding.qty;
+        }, 0);
+
+        const analyticsData = [
+          {
+            title: "Total Portfolio",
+            value: `$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+            change: "+5.2%", // Placeholder
+            isPositive: true,
+          },
+          {
+            title: "Monthly Savings",
+            value: "$2,850", // Static
+            change: "+12.3%",
+            isPositive: true,
+          },
+          {
+            title: "Risk Level",
+            value: "Moderate", // Static
+            change: "Balanced",
+            isPositive: true,
+          },
+          {
+            title: "AI Confidence",
+            value: "92%", // Static
+            change: "+2.1%",
+            isPositive: true,
+          },
+        ];
+
+        setAnalytics(analyticsData);
+        setLoadingAnalytics(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch analytics data");
+        setLoadingAnalytics(false);
+        console.error(err);
+      }
+    };
+
+    fetchAnalyticsData();
+  }, []);
 
   const handleRefreshInsights = () => {
     setLoading(true);
@@ -21,7 +85,7 @@ const Dashboard = () => {
       setLoading(false);
       toast({
         title: "Dashboard Updated",
-        description: "Latest financial insights have been generated",
+        description: "Latest cryptocurrency insights have been generated",
       });
     }, 1500);
   };
@@ -29,12 +93,11 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary pb-20 md:pb-0 md:pl-20">
       <NavigationBar />
-      
       <main className="container max-w-7xl px-4 md:px-8 py-8 md:py-12">
         <header className="text-center mb-12 md:mb-16 animate-fade-in">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gradient">Financial Dashboard</h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
-            Your personalized AI-powered financial overview
+            Your personalized AI-powered cryptocurrency overview
           </p>
         </header>
 
@@ -56,19 +119,25 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-            {mockAnalytics.map((item) => (
-              <div key={item.title} className="glass p-6 rounded-xl animate-float">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-semibold text-muted-foreground">{item.title}</h3>
-                  <span className={`text-sm font-medium ${item.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                    {item.change}
-                  </span>
+          {loadingAnalytics ? (
+            <div>Loading analytics...</div>
+          ) : error ? (
+            <div className="text-red-500">{error}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+              {analytics.map((item) => (
+                <div key={item.title} className="glass p-6 rounded-xl animate-float">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="font-semibold text-muted-foreground">{item.title}</h3>
+                    <span className={`text-sm font-medium ${item.isPositive ? "text-green-400" : "text-red-400"}`}>
+                      {item.change}
+                    </span>
+                  </div>
+                  <p className="text-2xl font-bold text-gradient">{item.value}</p>
                 </div>
-                <p className="text-2xl font-bold text-gradient">{item.value}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="grid md:grid-cols-2 gap-6 md:gap-8">
