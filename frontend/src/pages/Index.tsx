@@ -5,17 +5,6 @@ import MarketCard from "@/components/MarketCard";
 import { useToast } from "@/hooks/use-toast";
 import { ChartLine, Brain, TrendingUp } from "lucide-react";
 
-// Function to format market cap (kept for consistency, though backend handles it)
-const formatMarketCap = (cap: number): string => {
-  if (cap >= 1e12) {
-    return `$${(cap / 1e12).toFixed(2)}T`;
-  } else if (cap >= 1e9) {
-    return `$${(cap / 1e9).toFixed(1)}B`;
-  } else {
-    return `$${cap.toLocaleString()}`;
-  }
-};
-
 const Index = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(false);
@@ -24,23 +13,40 @@ const Index = () => {
   >([]);
   const [loadingMarket, setLoadingMarket] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchSymbol, setSearchSymbol] = useState<string>(""); // State for user input
+  const [searchError, setSearchError] = useState<string | null>(null);
 
+  // Initial fetch (optional, removed here for search-only behavior)
   useEffect(() => {
-    const fetchMarketData = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/api/market-data");
-        console.log("Frontend received:", response.data); // Debug log
-        setMarketData(response.data);
-        setLoadingMarket(false);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch market data");
-        setLoadingMarket(false);
-        console.error("Frontend error:", err);
-      }
-    };
-
-    fetchMarketData();
+    // No initial fetch; wait for user input
+    setLoadingMarket(false); // Start with no loading state until search
   }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchSymbol.trim()) {
+      setSearchError("Please enter a stock or crypto symbol");
+      return;
+    }
+
+    setLoadingMarket(true);
+    setError(null);
+    setSearchError(null);
+    setMarketData([]); // Clear previous results
+
+    try {
+      const response = await axios.get(`http://localhost:3001/api/search?symbol=${searchSymbol.toUpperCase()}`);
+      console.log("Frontend received:", response.data);
+      // Ensure response.data is an array for MarketCard mapping
+      setMarketData([response.data]); // Wrap single object in array
+      setLoadingMarket(false);
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || "Failed to fetch market data";
+      setError(errorMsg);
+      setLoadingMarket(false);
+      console.error("Frontend error:", err);
+    }
+  };
 
   const handleGetInsights = () => {
     setLoading(true);
@@ -60,11 +66,30 @@ const Index = () => {
         <header className="text-center mb-12 md:mb-16 animate-fade-in">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gradient">AI Investment Advisor</h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
-            Get real-time cryptocurrency insights powered by advanced AI analysis
+            Get real-time market insights powered by advanced AI analysis
           </p>
         </header>
 
         <section className="mb-12 md:mb-16">
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="flex items-center justify-center gap-4 mb-6">
+            <input
+              type="text"
+              value={searchSymbol}
+              onChange={(e) => setSearchSymbol(e.target.value)}
+              placeholder="Enter stock/crypto symbol (e.g., BTC-USD, TSLA)"
+              className="p-2 rounded-lg border border-gray-300 text-black w-64 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:scale-105 transition-all"
+            >
+              Search
+            </button>
+          </form>
+
+          {searchError && <div className="text-red-500 text-center mb-4">{searchError}</div>}
+
           <div className="flex items-center justify-between mb-6 md:mb-8">
             <div className="flex items-center gap-2">
               <ChartLine className="w-6 h-6 md:w-8 md:h-8 text-primary" />
@@ -81,10 +106,13 @@ const Index = () => {
               {loading ? "Analyzing..." : "Get AI Insights"}
             </button>
           </div>
+
           {loadingMarket ? (
             <div>Loading market data...</div>
           ) : error ? (
             <div className="text-red-500">{error}</div>
+          ) : marketData.length === 0 ? (
+            <div className="text-muted-foreground">Enter a symbol to see market data</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
               {marketData.map((asset) => (
