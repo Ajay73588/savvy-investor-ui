@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 // Market data endpoint (default BTC-USD, ETH-USD)
 app.get('/api/market-data', async (req, res) => {
     try {
-        const symbols = ['BTC-USD', 'ETH-USD'];
+        const symbols = ['BTC-INR', 'ETH-INR'];
         const data = await Promise.all(symbols.map(async (symbol) => {
             const quote = await yahooFinance.quoteSummary(symbol);
             return {

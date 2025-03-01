@@ -26,8 +26,8 @@ const Dashboard = () => {
 
         // Define portfolio holdings
         const holdings = [
-          { symbol: "BTC-USD", qty: 1 },
-          { symbol: "ETH-USD", qty: 10 },
+          { symbol: "BTC-INR", qty: 1 },
+          { symbol: "ETH-INR", qty: 10 },
         ];
 
         // Calculate total portfolio value
@@ -39,13 +39,13 @@ const Dashboard = () => {
         const analyticsData = [
           {
             title: "Total Portfolio",
-            value: `$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+            value: `₹${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
             change: `${response.data[0].change.toFixed(2)}%`, // BTC change as example
             isPositive: response.data[0].change >= 0,
           },
           {
             title: "Monthly Savings",
-            value: "$2,850", // Static placeholder
+            value: "₹2,850", // Static placeholder
             change: "+12.3%",
             isPositive: true,
           },

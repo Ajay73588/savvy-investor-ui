@@ -25,7 +25,7 @@ const MarketCard = ({ name, symbol, price, change, marketCap }: MarketCardProps)
         </div>
       </div>
       <div className="space-y-2">
-        <p className="text-2xl font-bold">${price.toLocaleString()}</p>
+        <p className="text-2xl font-bold">₹{price.toLocaleString()}</p>
         <p className="text-sm text-muted-foreground font-medium">Market Cap: {marketCap}</p>
       </div>
     </div>
