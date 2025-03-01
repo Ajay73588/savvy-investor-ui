@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import NavigationBar from "@/components/NavigationBar";
+import TransactionForm from "@/components/transactionform"
 import { Brain, DollarSign, ChartBar, ChartPie } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -136,27 +137,40 @@ const Dashboard = () => {
           )}
         </section>
 
-        <section className="grid md:grid-cols-2 gap-6 md:gap-8">
-          <div className="glass rounded-xl p-6 md:p-8 animate-fade-in">
-            <div className="flex items-center gap-2 mb-6">
-              <DollarSign className="w-6 h-6 text-primary" />
-              <h2 className="text-xl font-bold text-gradient">Spending Analysis</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="h-40 flex items-center justify-center text-muted-foreground">
-                Spending chart will be implemented here
-              </div>
-            </div>
+        {/* New layout: Transaction form on left, analysis sections on right */}
+        <section className="grid md:grid-cols-3 gap-6 md:gap-8">
+          {/* Left column - Transaction Form */}
+          <div className="md:col-span-1">
+            <TransactionForm />
           </div>
 
-          <div className="glass rounded-xl p-6 md:p-8 animate-fade-in">
-            <div className="flex items-center gap-2 mb-6">
-              <ChartBar className="w-6 h-6 text-primary" />
-              <h2 className="text-xl font-bold text-gradient">Investment Distribution</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="h-40 flex items-center justify-center text-muted-foreground">
-                Investment distribution chart will be implemented here
+          {/* Right columns - Analysis sections */}
+          <div className="md:col-span-2">
+            <div className="grid grid-cols-1 gap-6 md:gap-8">
+              {/* Spending Analysis */}
+              <div className="glass rounded-xl p-6 md:p-8 animate-fade-in">
+                <div className="flex items-center gap-2 mb-6">
+                  <DollarSign className="w-6 h-6 text-primary" />
+                  <h2 className="text-xl font-bold text-gradient">Spending Analysis</h2>
+                </div>
+                <div className="space-y-4">
+                  <div className="h-40 flex items-center justify-center text-muted-foreground">
+                    Spending chart will be implemented here
+                  </div>
+                </div>
+              </div>
+
+              {/* Investment Distribution */}
+              <div className="glass rounded-xl p-6 md:p-8 animate-fade-in">
+                <div className="flex items-center gap-2 mb-6">
+                  <ChartBar className="w-6 h-6 text-primary" />
+                  <h2 className="text-xl font-bold text-gradient">Investment Distribution</h2>
+                </div>
+                <div className="space-y-4">
+                  <div className="h-40 flex items-center justify-center text-muted-foreground">
+                    Investment distribution chart will be implemented here
+                  </div>
+                </div>
               </div>
             </div>
           </div>
