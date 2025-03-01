@@ -5,7 +5,7 @@ import MarketCard from "@/components/MarketCard";
 import { useToast } from "@/hooks/use-toast";
 import { ChartLine, Brain, TrendingUp } from "lucide-react";
 
-// Function to format market cap (e.g., $845.2B, $2.74T)
+// Function to format market cap (kept for consistency, though backend handles it)
 const formatMarketCap = (cap: number): string => {
   if (cap >= 1e12) {
     return `$${(cap / 1e12).toFixed(2)}T`;
@@ -28,25 +28,14 @@ const Index = () => {
   useEffect(() => {
     const fetchMarketData = async () => {
       try {
-        // Fetch crypto data from CoinGecko
-        const cryptoResponse = await axios.get(
-          "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,ripple"
-        );
-        if (!cryptoResponse.data.length) throw new Error("No crypto data from CoinGecko");
-        const cryptos = cryptoResponse.data.map((coin: any) => ({
-          name: coin.name,
-          symbol: coin.symbol.toUpperCase(),
-          price: coin.current_price,
-          change: coin.price_change_percentage_24h,
-          marketCap: formatMarketCap(coin.market_cap),
-        }));
-
-        setMarketData(cryptos);
+        const response = await axios.get("http://localhost:3001/api/market-data");
+        console.log("Frontend received:", response.data); // Debug log
+        setMarketData(response.data);
         setLoadingMarket(false);
       } catch (err: any) {
         setError(err.message || "Failed to fetch market data");
         setLoadingMarket(false);
-        console.error(err);
+        console.error("Frontend error:", err);
       }
     };
 
@@ -67,7 +56,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary pb-20 md:pb-0 md:pl-20">
       <NavigationBar />
-      
       <main className="container max-w-7xl px-4 md:px-8 py-8 md:py-12">
         <header className="text-center mb-12 md:mb-16 animate-fade-in">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gradient">AI Investment Advisor</h1>
@@ -93,7 +81,6 @@ const Index = () => {
               {loading ? "Analyzing..." : "Get AI Insights"}
             </button>
           </div>
-          
           {loadingMarket ? (
             <div>Loading market data...</div>
           ) : error ? (

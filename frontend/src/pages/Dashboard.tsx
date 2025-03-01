@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [analytics, setAnalytics] = useState<
     { title: string; value: string; change: string; isPositive: boolean }[]
   >([]);
@@ -16,52 +16,48 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchAnalyticsData = async () => {
       try {
-        // Only cryptocurrency holdings
-        const holdings = [
-          { id: "bitcoin", qty: 1, symbol: "BTC" },
-          { id: "ethereum", qty: 10, symbol: "ETH" },
-          { id: "ripple", qty: 4, symbol: "RPL" },
-        ];
-
-        // Fetch crypto prices from CoinGecko
-        const cryptoIds = holdings.map(h => h.id).join(",");
-        const cryptoResponse = await axios.get(
-          `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${cryptoIds}`
-        );
-        if (!cryptoResponse.data.length) throw new Error("No crypto data from CoinGecko");
-        const cryptoData = cryptoResponse.data.reduce((acc: any, coin: any) => {
-          acc[coin.id] = coin.current_price;
+        // Fetch crypto data from backend
+        const response = await axios.get("http://localhost:3001/api/market-data");
+        console.log("Dashboard received:", response.data); // Debug log
+        const cryptoData = response.data.reduce((acc: any, asset: any) => {
+          acc[asset.symbol] = asset.price;
           return acc;
         }, {});
 
-        // Calculate total portfolio value (only cryptos)
+        // Define portfolio holdings
+        const holdings = [
+          { symbol: "BTC-USD", qty: 1 },
+          { symbol: "ETH-USD", qty: 10 },
+        ];
+
+        // Calculate total portfolio value
         const totalValue = holdings.reduce((sum, holding) => {
-          const price = cryptoData[holding.id];
-          return sum + price * holding.qty;
+          const price = cryptoData[holding.symbol];
+          return sum + (price * holding.qty);
         }, 0);
 
         const analyticsData = [
           {
             title: "Total Portfolio",
             value: `$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-            change: "+5.2%", // Placeholder
-            isPositive: true,
+            change: `${response.data[0].change.toFixed(2)}%`, // BTC change as example
+            isPositive: response.data[0].change >= 0,
           },
           {
             title: "Monthly Savings",
-            value: "$2,850", // Static
+            value: "$2,850", // Static placeholder
             change: "+12.3%",
             isPositive: true,
           },
           {
             title: "Risk Level",
-            value: "Moderate", // Static
+            value: "Moderate", // Static placeholder
             change: "Balanced",
             isPositive: true,
           },
           {
             title: "AI Confidence",
-            value: "92%", // Static
+            value: "92%", // Static placeholder
             change: "+2.1%",
             isPositive: true,
           },
@@ -72,7 +68,7 @@ const Dashboard = () => {
       } catch (err: any) {
         setError(err.message || "Failed to fetch analytics data");
         setLoadingAnalytics(false);
-        console.error(err);
+        console.error("Dashboard error:", err);
       }
     };
 
